@@ -2,6 +2,7 @@ import unittest
 
 from htmlnode import *
 from textnode import *
+from markdown_conv import *
 
 
 class TestHtmlNode(unittest.TestCase):
@@ -88,7 +89,33 @@ class TestParentNode(unittest.TestCase):
         self.assertEqual(parent_node2.to_html(), expected2)
         self.assertRaises(ValueError)
 
-
+class TestNodeConversion(unittest.TestCase):
+    def test_convert_node(self):
+        text_node = TextNode("Convert *this* node", TextType.TEXT)
+        text_node2 = TextNode("Convert **this** node", TextType.TEXT)
+        text_node3 = TextNode("Code here: `code block` meow lmao", TextType.TEXT)
+        result = split_nodes_delimiter([text_node], '*', TextType.ITALIC)
+        result2 = split_nodes_delimiter([text_node2], '**', TextType.BOLD)
+        result3 = split_nodes_delimiter([text_node3], '`', TextType.CODE)
+        expected = [
+            TextNode("Convert ", TextType.TEXT),
+            TextNode("this", TextType.ITALIC),
+            TextNode(" node", TextType.TEXT)
+        ]
+        expected2 = [
+            TextNode("Convert ", TextType.TEXT),
+            TextNode("this", TextType.BOLD),
+            TextNode(" node", TextType.TEXT)
+        ]
+        expected3 = [
+            TextNode("Code here: ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(" meow lmao", TextType.TEXT)
+        ]
+        self.assertEqual(result, expected)
+        self.assertEqual(result2, expected2)
+        self.assertEqual(result3, expected3)
+        
 
 
 if __name__ == "__main__":
