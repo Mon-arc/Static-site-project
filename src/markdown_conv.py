@@ -1,5 +1,5 @@
 from htmlnode import *
-from textnode import TextNode, TextType
+from textnode import *
 import re
 
 block_type_paragraph = "paragraph"
@@ -106,10 +106,10 @@ def split_nodes_link(old_nodes):
     return new_nodes
 
 def text_to_textnodes(text):
-    nodes = [TextNode(text, TextType)]
+    nodes = [TextNode(text, TextType.TEXT)]
 
-    nodes= split_nodes_delimiter(nodes, '*', TextType.ITALIC)
     nodes= split_nodes_delimiter(nodes, '**', TextType.BOLD)
+    nodes= split_nodes_delimiter(nodes, '*', TextType.ITALIC)
     nodes= split_nodes_delimiter(nodes, '`', TextType.CODE)
     nodes= split_nodes_link(nodes)
     nodes= split_nodes_image(nodes)
@@ -222,7 +222,7 @@ def ulist_to_html_node(block):
     items = block.split('\n')
     html_items = []
     for item in items:
-        text = item[3:]
+        text = item[2:]
         children = text_to_children(text)
         html_items.append(ParentNode('li', children))
     return ParentNode('ul', html_items)
