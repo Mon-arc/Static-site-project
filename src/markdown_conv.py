@@ -30,6 +30,15 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         new_nodes.extend(split_nodes)
     return new_nodes
 
+def extract_title(markdown):
+    count = get_heading_level(markdown)
+    if count != 1:
+        raise Exception("h1 Header not found")
+    first_line = markdown.split('\n')
+    first_line = " ".join(first_line).lstrip('#')
+    first_line = first_line.rstrip().lstrip()
+    return first_line
+    
 '''
 Takes raw markdown text and returns list of tuples for images using regex
 stuff. Example:
@@ -108,9 +117,9 @@ def split_nodes_link(old_nodes):
 def text_to_textnodes(text):
     nodes = [TextNode(text, TextType.TEXT)]
 
-    nodes= split_nodes_delimiter(nodes, '**', TextType.BOLD)
-    nodes= split_nodes_delimiter(nodes, '*', TextType.ITALIC)
-    nodes= split_nodes_delimiter(nodes, '`', TextType.CODE)
+    nodes= split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes= split_nodes_delimiter(nodes, "*", TextType.ITALIC)
+    nodes= split_nodes_delimiter(nodes, "`", TextType.CODE)
     nodes= split_nodes_link(nodes)
     nodes= split_nodes_image(nodes)
     return nodes
@@ -125,25 +134,36 @@ def markdown_to_blocks(markdown):
         filtered_blocks.append(block)
     return filtered_blocks 
 
-def block_to_block_type(markdown):
-    count = get_heading_level(markdown) 
+def block_to_block_type(block):
+    lines = block.split("\n")
 
-    if count > 0 and count < 7:
+    if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
         return block_type_heading
-    if markdown.startswith('```') and markdown.endswith('```'):
-        return block_type_code 
-
-    lines = markdown.split('\n')
-    
-    if all(line.startswith('>') for line in lines):
+    if len(lines) > 1 and lines[0].startswith("```") and lines[-1].startswith("```"):
+        return block_type_code
+    if block.startswith(">"):
+        for line in lines:
+            if not line.startswith(">"):
+                return block_type_paragraph
         return block_type_quote
-    elif all(line.startswith('*') for line in lines) or all(line.startswith('-') for line in lines):
+    if block.startswith("* "):
+        for line in lines:
+            if not line.startswith("* "):
+                return block_type_paragraph
         return block_type_ulist
-    elif all(re.match(f"^{i}\\. .+", line) for i, line in enumerate(lines, 1)):
+    if block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return block_type_paragraph
+        return block_type_ulist
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}. "):
+                return block_type_paragraph
+            i += 1
         return block_type_olist
-    else:
-        return block_type_paragraph
-
+    return block_type_paragraph
 def get_heading_level(markdown):
     count = 0
     for char in markdown:
@@ -192,9 +212,9 @@ def paragraph_to_html_node(block):
     children = text_to_children(paragraph)
     return ParentNode('p', children)
 
+
 def heading_to_html_node(block):
     level = get_heading_level(block)
-    
     if level + 1 >= len(block):
         raise ValueError(f"Invalid heading level: {level}")
     text = block[level + 1 :]

@@ -1,5 +1,6 @@
 import unittest
 from markdown_conv import (
+        extract_title,
         markdown_to_html_node,
         markdown_to_blocks,
         block_to_block_type,
@@ -151,6 +152,16 @@ this is paragraph text
             "<div><blockquote>This is a blockquote block</blockquote><p>this is paragraph text</p></div>",
         )
 
+    def test_extract_title(self):
+        self.assertEqual(
+            extract_title("# Hello"),
+            "Hello"
+        )
+        self.assertEqual(
+            extract_title("# gidiasj oasidj aosidjasdoija ### oasdaisjd meow"),
+            "gidiasj oasidj aosidjasdoija ### oasdaisjd meow"
+        )
+        self.assertRaises(Exception)
 
 if __name__ == "__main__":
     unittest.main()
